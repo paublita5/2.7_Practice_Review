@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Section 2.7: Marginal Analysis — Interactive Practice</title>
+<style>
+  :root{
+    --navy:#1b2a4a; --gold:#b58a2a; --green:#1e7a46; --red:#b3261e;
+    --bg:#f6f7fb; --card:#ffffff; --border:#dde1ea;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background:var(--bg); margin:0; padding:0 0 60px 0; color:#222;
+  }
+  header{
+    background:linear-gradient(135deg, var(--navy), #2b4278);
+    color:white; padding:28px 20px 22px; text-align:center;
+  }
+  header h1{margin:0 0 6px; font-size:1.6em;}
+  header p{margin:0; opacity:0.9; font-size:0.95em;}
+  #progress-wrap{
+    max-width:900px; margin:18px auto 0; padding:0 20px;
+  }
+  #progress-bar-bg{
+    background:#dde1ea; border-radius:20px; height:14px; overflow:hidden;
+  }
+  #progress-bar{
+    background:var(--gold); height:100%; width:0%; transition:width 0.3s;
+  }
+  #progress-label{
+    text-align:center; font-size:0.85em; color:#555; margin-top:6px;
+  }
+  .container{max-width:900px; margin:0 auto; padding:0 20px;}
+  .part-title{
+    margin:36px 0 14px; color:var(--navy); border-bottom:3px solid var(--gold);
+    padding-bottom:6px; font-size:1.25em;
+  }
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:10px;
+    padding:20px 22px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,0.04);
+  }
+  .qnum{font-weight:700; color:var(--navy); margin-bottom:6px; display:block;}
+  .prompt{margin-bottom:14px; line-height:1.5;}
+  .subpart{margin:10px 0 14px; padding-left:4px; border-left:3px solid #eef0f5; padding-left:14px;}
+  .subpart label{display:block; font-size:0.95em; margin-bottom:6px; color:#333;}
+  input[type="text"], input[type="number"]{
+    padding:8px 10px; border:1px solid #ccc; border-radius:6px; width:180px;
+    font-size:0.95em; margin-right:8px;
+  }
+  textarea{
+    width:100%; min-height:60px; padding:8px 10px; border:1px solid #ccc;
+    border-radius:6px; font-family:inherit; font-size:0.95em; resize:vertical;
+  }
+  .choices label{
+    display:block; background:#f8f9fc; border:1px solid var(--border);
+    border-radius:6px; padding:8px 12px; margin-bottom:6px; cursor:pointer;
+    transition:background 0.15s;
+  }
+  .choices label:hover{background:#eef1f8;}
+  .btn{
+    background:var(--navy); color:white; border:none; padding:9px 18px;
+    border-radius:6px; cursor:pointer; font-size:0.9em; margin-top:4px; margin-right:8px;
+  }
+  .btn:hover{background:#2b4278;}
+  .btn-secondary{
+    background:transparent; color:var(--navy); border:1px solid var(--navy);
+  }
+  .btn-secondary:hover{background:#eef1f8;}
+  .feedback{
+    margin-top:10px; padding:10px 12px; border-radius:6px; font-size:0.92em; display:none;
+  }
+  .feedback.correct{background:#e8f5ec; color:var(--green); border:1px solid #b9ddc4; display:block;}
+  .feedback.incorrect{background:#fbeceb; color:var(--red); border:1px solid #f0c6c3; display:block;}
+  .explain{
+    margin-top:10px; padding:10px 12px; background:#fff8e8; border:1px solid #f0e0b0;
+    border-radius:6px; font-size:0.9em; display:none; color:#5a4a1a;
+  }
+  .sample{
+    margin-top:10px; padding:10px 12px; background:#eef1f8; border:1px solid #ccd3e8;
+    border-radius:6px; font-size:0.9em; display:none; color:var(--navy);
+  }
+  #final-score{
+    max-width:900px; margin:30px auto; padding:20px; background:var(--navy);
+    color:white; border-radius:10px; text-align:center; font-size:1.1em; display:none;
+  }
+  .tag{
+    display:inline-block; font-size:0.7em; padding:2px 8px; border-radius:10px;
+    background:#eef1f8; color:var(--navy); margin-left:8px; font-weight:600;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Section 2.7 — Marginal Analysis: Interactive Practice</h1>
+  <p>Answer each question, then click "Check" for instant feedback. Work problems out on paper first.</p>
+</header>
+
+<div id="progress-wrap">
+  <div id="progress-bar-bg"><div id="progress-bar"></div></div>
+  <div id="progress-label">0 of 0 auto-graded questions answered correctly</div>
+</div>
+
+<div class="container" id="quiz-container"></div>
+
+<div id="final-score"></div>
+
+<script>
+/* ---------------------------------------------------------------
+   DATA MODEL
+   Each question has an id, html prompt, an input type, correct
+   answer(s) with tolerance (for numeric), and an explanation.
+---------------------------------------------------------------- */
+
+const parts = [
+{
+  title: "Part A: Revenue, Cost, and Profit Functions",
+  items: [
+    {
+      id: "q1",
+      prompt: "<b>1.</b> A company's price-demand equation is $x = 20 - 4p$, where $x$ is demand and $p$ is price.",
+      sub: [
+        {
+          id:"q1a", label:"a) Solve for p as a function of x. (Choose the correct form)",
+          type:"mc",
+          choices:[
+            {val:"A", text:"$p = 5 - \\dfrac{x}{4}$"},
+            {val:"B", text:"$p = \\dfrac{x}{4} - 5$"},
+            {val:"C", text:"$p = 20 - 4x$"},
+            {val:"D", text:"$p = 5 + \\dfrac{x}{4}$"}
+          ],
+          correct:"A",
+          explain:"Divide both sides by -4 after isolating p: $x=20-4p \\Rightarrow 4p = 20-x \\Rightarrow p = 5-\\frac{x}{4}$."
+        },
+        {
+          id:"q1b", label:"b) Find the revenue function R(x). (Choose the correct form)",
+          type:"mc",
+          choices:[
+            {val:"A", text:"$R(x) = 5x - \\dfrac{x^2}{4}$"},
+            {val:"B", text:"$R(x) = 20x - 4x^2$"},
+            {val:"C", text:"$R(x) = \\dfrac{x^2}{4} - 5x$"},
+            {val:"D", text:"$R(x) = 5x + \\dfrac{x^2}{4}$"}
+          ],
+          correct:"A",
+          explain:"$R(x) = x\\cdot p(x) = x\\left(5-\\frac{x}{4}\\right) = 5x - \\frac{x^2}{4}$."
+        }
+      ]
+    },
+    {
+      id:"q2",
+      prompt:"<b>2.</b> Find the profit when 50 items are sold, given $C(x) = 200 + 2x$ and $R(x) = 10x - 0.02x^2$.",
+      sub:[
+        { id:"q2a", label:"P(50) = $", type:"num", correct:150, tol:0.5,
+          explain:"$P(x)=R(x)-C(x) = 10x-0.02x^2-200-2x = -0.02x^2+8x-200$. $P(50) = -0.02(2500)+8(50)-200 = -50+400-200=150$." }
+      ]
+    },
+    {
+      id:"q3",
+      prompt:"<b>3.</b> Price-demand: $p = -\\dfrac{1}{5}x + 800$, cost: $C(x)=5000+20x$. Find the profit function $P(x)$.",
+      sub:[
+        { id:"q3a", label:"Select the correct profit function:", type:"mc",
+          choices:[
+            {val:"A", text:"$P(x) = -\\dfrac{1}{5}x^2 + 780x - 5000$"},
+            {val:"B", text:"$P(x) = -\\dfrac{1}{5}x^2 + 820x - 5000$"},
+            {val:"C", text:"$P(x) = -\\dfrac{1}{5}x^2 + 800x - 5000$"},
+            {val:"D", text:"$P(x) = \\dfrac{1}{5}x^2 + 780x - 5000$"}
+          ],
+          correct:"A",
+          explain:"$R(x)=x(-\\frac15 x + 800) = -\\frac15x^2+800x$. $P(x) = R(x)-C(x) = -\\frac15x^2+800x-5000-20x = -\\frac15x^2+780x-5000$."
+        }
+      ]
+    }
+  ]
+},
+{
+  title: "Part B: Marginal Functions",
+  items:[
+    {
+      id:"q4",
+      prompt:"<b>4.</b> $C(x) = 400 + 3x + 0.01x^2$. Find $C'(x)$ and evaluate $C'(50)$.",
+      sub:[
+        { id:"q4a", label:"C'(50) = $", type:"num", correct:4, tol:0.1,
+          explain:"$C'(x) = 3+0.02x$. $C'(50) = 3+0.02(50) = 3+1 = 4$." },
+        { id:"q4b", label:"Interpretation (type your sentence, then compare to the sample):", type:"text_free",
+          sample:"At a production level of 50 items, cost is increasing at a rate of $4 per additional item." }
+      ]
+    },
+    {
+      id:"q5",
+      prompt:"<b>5.</b> Price-demand equation: $x = 40 - 2p$.",
+      sub:[
+        { id:"q5a", label:"a) R(x) = ?", type:"mc",
+          choices:[
+            {val:"A", text:"$R(x) = 20x - \\dfrac{x^2}{2}$"},
+            {val:"B", text:"$R(x) = 40x - 2x^2$"},
+            {val:"C", text:"$R(x) = \\dfrac{x^2}{2} - 20x$"}
+          ], correct:"A",
+          explain:"$p = 20-\\frac{x}{2}$, so $R(x)=x\\left(20-\\frac{x}{2}\\right)=20x-\\frac{x^2}{2}$."
+        },
+        { id:"q5b", label:"b) R'(x) = ?", type:"mc",
+          choices:[
+            {val:"A", text:"$R'(x) = 20 - x$"},
+            {val:"B", text:"$R'(x) = 20x$"},
+            {val:"C", text:"$R'(x) = -x$"}
+          ], correct:"A", explain:"Derivative of $20x-\\frac{x^2}{2}$ is $20-x$."
+        },
+        { id:"q5c", label:"c) R'(10) = $", type:"num", correct:10, tol:0.1,
+          explain:"$R'(10) = 20-10 = 10$. Revenue is increasing at $10 per item at a production level of 10." }
+      ]
+    },
+    {
+      id:"q6",
+      prompt:"<b>6.</b> $P(x) = -0.004x^2 + 6x - 200$. Evaluate the marginal profit at $x=300$.",
+      sub:[
+        { id:"q6a", label:"P'(300) = $", type:"num", correct:3.6, tol:0.05,
+          explain:"$P'(x) = -0.008x+6$. $P'(300) = -2.4+6 = 3.6$. Profit increasing at $3.60 per unit at 300 units." }
+      ]
+    }
+  ]
+},
+{
+  title:"Part C: Average and Marginal Average Functions",
+  items:[
+    {
+      id:"q7",
+      prompt:"<b>7.</b> $C(x) = 3000 + 40x + 0.02x^2$ (bicycles).",
+      sub:[
+        { id:"q7a", label:"a) Average cost function — select correct form:", type:"mc",
+          choices:[
+            {val:"A", text:"$\\overline{C}(x) = \\dfrac{3000}{x} + 40 + 0.02x$"},
+            {val:"B", text:"$\\overline{C}(x) = 3000 + \\dfrac{40}{x} + 0.02x$"},
+            {val:"C", text:"$\\overline{C}(x) = \\dfrac{3000}{x} + 40x$"}
+          ], correct:"A", explain:"Split term-by-term: $\\frac{3000}{x}+\\frac{40x}{x}+\\frac{0.02x^2}{x} = \\frac{3000}{x}+40+0.02x$."
+        },
+        { id:"q7b", label:"b) Marginal average cost — select correct form:", type:"mc",
+          choices:[
+            {val:"A", text:"$\\overline{C}\\,'(x) = -\\dfrac{3000}{x^2} + 0.02$"},
+            {val:"B", text:"$\\overline{C}\\,'(x) = \\dfrac{3000}{x^2} + 0.02$"},
+            {val:"C", text:"$\\overline{C}\\,'(x) = -\\dfrac{3000}{x^2} + 40$"}
+          ], correct:"A", explain:"Differentiate $\\frac{3000}{x}+40+0.02x$ term by term: $-3000x^{-2}+0.02$."
+        },
+        { id:"q7c", label:"c) C̄'(50) = $", type:"num", correct:-0.98, tol:0.02,
+          explain:"$\\overline{C}\\,'(50) = -\\frac{3000}{2500}+0.02 = -1.2+0.02 = -0.98$." }
+      ]
+    },
+    {
+      id:"q8",
+      prompt:"<b>8.</b> $P(x) = 900 - 200x + 0.08x^2$.",
+      sub:[
+        { id:"q8a", label:"P̄'(20) = $", type:"num", correct:-2.17, tol:0.05,
+          explain:"$\\overline{P}(x) = \\frac{900}{x}-200+0.08x$, so $\\overline{P}\\,'(x) = -\\frac{900}{x^2}+0.08$. At $x=20$: $-\\frac{900}{400}+0.08 = -2.25+0.08 = -2.17$." }
+      ]
+    },
+    {
+      id:"q9",
+      prompt:"<b>9.</b> $R(x) = 500x - 0.05x^2$.",
+      sub:[
+        { id:"q9a", label:"R̄'(x) evaluated at x=100 = $", type:"num", correct:-0.05, tol:0.01,
+          explain:"$\\overline{R}(x) = 500-0.05x$, so $\\overline{R}\\,'(x) = -0.05$ (constant for all x, including $x=100$)." }
+      ]
+    }
+  ]
+},
+{
+  title:"Part D: Marginal vs. Exact",
+  items:[
+    {
+      id:"q10",
+      prompt:"<b>10.</b> $C(x) = 2000 + 15x - 0.2x^2$ (speakers). Approximate the cost of producing the 21st speaker using marginal cost.",
+      sub:[
+        { id:"q10a", label:"Approximate cost of the 21st speaker = $", type:"num", correct:7, tol:0.2,
+          explain:"$a+1=21 \\Rightarrow a=20$. $C'(x)=15-0.4x$, so $C'(20)=15-8=7$." }
+      ]
+    },
+    {
+      id:"q11",
+      prompt:"<b>11.</b> $P(x) = 45x - 0.05x^2 - 500$ (bikes).",
+      sub:[
+        { id:"q11a", label:"a) Approximate profit from the 26th bike using P'(25) = $", type:"num", correct:42.5, tol:0.2,
+          explain:"$P'(x)=45-0.1x$. $a=25$: $P'(25)=45-2.5=42.5$." },
+        { id:"q11b", label:"b) Actual profit P(26)-P(25) = $", type:"num", correct:42.45, tol:0.1,
+          explain:"$P(26)=45(26)-0.05(676)-500=1170-33.8-500=636.2$. $P(25)=45(25)-0.05(625)-500=1125-31.25-500=593.75$. Difference $=42.45$ — very close to the approximation of 42.50." }
+      ]
+    },
+    {
+      id:"q12",
+      prompt:"<b>12.</b> $P(x) = 50x - 0.05x^2 - 400$ (grills).",
+      sub:[
+        { id:"q12a", label:"a) Average profit per grill at 40 grills, P̄(40) = $", type:"num", correct:38, tol:0.1,
+          explain:"$\\overline{P}(x)=50-0.05x-\\frac{400}{x}$. $\\overline{P}(40)=50-0.05(40)-\\frac{400}{40}=50-2-10=38$." },
+        { id:"q12b", label:"b) Marginal average profit at 40 grills, P̄'(40) = $", type:"num", correct:-0.3, tol:0.05,
+          explain:"$\\overline{P}\\,'(x) = -\\frac{400}{x^2}-0.05$. $\\overline{P}\\,'(40) = -\\frac{400}{1600}-0.05 = -0.25-0.05=-0.3$." },
+        { id:"q12c", label:"c) Estimate average profit per grill at 41 grills = $", type:"num", correct:37.7, tol:0.1,
+          explain:"$\\overline{P}(41) \\approx \\overline{P}(40)+\\overline{P}\\,'(40) = 38 + (-0.3) = 37.7$." }
+      ]
+    }
+  ]
+},
+{
+  title:"Part E: Mixed Review / Conceptual",
+  items:[
+    {
+      id:"q13",
+      prompt:"<b>13.</b> True or False:",
+      sub:[
+        { id:"q13a", label:"a) Marginal cost and average cost are the same thing.", type:"tf", correct:"F",
+          explain:"False — marginal cost is a derivative (instantaneous rate), average cost is total cost divided by x (cost per item)." },
+        { id:"q13b", label:"b) $C'(a) \\approx C(a+1) - C(a)$", type:"tf", correct:"T",
+          explain:"True — this is exactly the marginal-vs-exact approximation." },
+        { id:"q13c", label:"c) The average profit function tells you the profit earned from producing one additional item.", type:"tf", correct:"F",
+          explain:"False — that's what marginal profit (or the marginal-vs-exact approximation) estimates; average profit is profit per item overall." }
+      ]
+    },
+    {
+      id:"q14",
+      prompt:"<b>14.</b> $P(x) = -0.01x^2 + 8x - 300$.",
+      sub:[
+        { id:"q14a", label:"a) P'(x) — select correct form:", type:"mc",
+          choices:[
+            {val:"A", text:"$P'(x) = -0.02x + 8$"},
+            {val:"B", text:"$P'(x) = -0.01x + 8$"},
+            {val:"C", text:"$P'(x) = -0.02x$"}
+          ], correct:"A", explain:"Power rule: derivative of $-0.01x^2$ is $-0.02x$; derivative of $8x$ is 8." },
+        { id:"q14b", label:"b) P'(100) = $", type:"num", correct:6, tol:0.1,
+          explain:"$P'(100) = -0.02(100)+8 = -2+8 = 6$." },
+        { id:"q14c", label:"c) At x=100, is profit increasing or decreasing?", type:"mc",
+          choices:[{val:"A", text:"Increasing, because P'(100) > 0"},{val:"B", text:"Decreasing, because P'(100) < 0"}],
+          correct:"A", explain:"Since $P'(100)=6>0$, profit is increasing at that production level." }
+      ]
+    }
+  ]
+}
+];
+
+/* ---------------------------------------------------------------
+   RENDERING
+---------------------------------------------------------------- */
+let totalGraded = 0;
+let correctCount = 0;
+const answeredCorrectly = new Set();
+
+function buildSub(sub){
+  let html = `<div class="subpart" data-id="${sub.id}">`;
+  html += `<label>${sub.label}</label>`;
+
+  if(sub.type === "num"){
+    html += `<input type="number" step="any" id="input-${sub.id}" placeholder="answer">
+      <button class="btn" onclick="checkAnswer('${sub.id}')">Check</button>`;
+    totalGraded++;
+  } else if(sub.type === "mc"){
+    html += `<div class="choices">`;
+    sub.choices.forEach((c)=>{
+      html += `<label><input type="radio" name="${sub.id}" value="${c.val}"> ${c.text}</label>`;
+    });
+    html += `</div><button class="btn" onclick="checkAnswer('${sub.id}')">Check</button>`;
+    totalGraded++;
+  } else if(sub.type === "tf"){
+    html += `<div class="choices">
+      <label><input type="radio" name="${sub.id}" value="T"> True</label>
+      <label><input type="radio" name="${sub.id}" value="F"> False</label>
+      </div><button class="btn" onclick="checkAnswer('${sub.id}')">Check</button>`;
+    totalGraded++;
+  } else if(sub.type === "text_free"){
+    html += `<textarea id="input-${sub.id}" placeholder="Type your interpretation..."></textarea>
+      <button class="btn btn-secondary" onclick="showSample('${sub.id}')">Compare to sample answer</button>`;
+  }
+
+  html += `<div class="feedback" id="fb-${sub.id}"></div>`;
+  html += `<div class="explain" id="ex-${sub.id}"></div>`;
+  html += `<div class="sample" id="sample-${sub.id}"></div>`;
+  html += `</div>`;
+  return html;
+}
+
+function buildPart(part){
+  let html = `<h2 class="part-title">${part.title}</h2>`;
+  part.items.forEach(item=>{
+    html += `<div class="card" id="card-${item.id}">`;
+    html += `<div class="prompt">${item.prompt}</div>`;
+    item.sub.forEach(sub=>{ html += buildSub(sub); });
+    html += `</div>`;
+  });
+  return html;
+}
+
+function render(){
+  const container = document.getElementById("quiz-container");
+  let html = "";
+  parts.forEach(p=>{ html += buildPart(p); });
+  container.innerHTML = html;
+  document.getElementById("progress-label").textContent =
+    `0 of ${totalGraded} auto-graded questions answered correctly`;
+  if (window.MathJax) MathJax.typesetPromise();
+}
+
+/* ---------------------------------------------------------------
+   LOOKUP + CHECK LOGIC
+---------------------------------------------------------------- */
+function findSub(id){
+  for(const part of parts){
+    for(const item of part.items){
+      for(const sub of item.sub){
+        if(sub.id === id) return sub;
+      }
+    }
+  }
+  return null;
+}
+
+function checkAnswer(id){
+  const sub = findSub(id);
+  const fb = document.getElementById(`fb-${id}`);
+  const ex = document.getElementById(`ex-${id}`);
+  let isCorrect = false;
+  let userProvided = true;
+
+  if(sub.type === "num"){
+    const input = document.getElementById(`input-${id}`);
+    const val = parseFloat(input.value);
+    if(isNaN(val)){ userProvided = false; }
+    else { isCorrect = Math.abs(val - sub.correct) <= (sub.tol || 0.01); }
+  } else if(sub.type === "mc" || sub.type === "tf"){
+    const radios = document.getElementsByName(id);
+    let selected = null;
+    radios.forEach(r=>{ if(r.checked) selected = r.value; });
+    if(selected === null){ userProvided = false; }
+    else { isCorrect = selected === sub.correct; }
+  }
+
+  if(!userProvided){
+    fb.className = "feedback incorrect";
+    fb.textContent = "Please enter or select an answer first.";
+    fb.style.display = "block";
+    return;
+  }
+
+  if(isCorrect){
+    fb.className = "feedback correct";
+    fb.textContent = "✓ Correct!";
+    if(!answeredCorrectly.has(id)){
+      answeredCorrectly.add(id);
+      correctCount++;
+    }
+  } else {
+    fb.className = "feedback incorrect";
+    fb.textContent = "✗ Not quite — review the explanation below and try again.";
+    if(answeredCorrectly.has(id)){
+      answeredCorrectly.delete(id);
+      correctCount--;
+    }
+  }
+  fb.style.display = "block";
+  ex.textContent = "Explanation: " + sub.explain;
+  ex.style.display = "block";
+  if (window.MathJax) MathJax.typesetPromise([ex]);
+
+  updateProgress();
+}
+
+function showSample(id){
+  const sub = findSub(id);
+  const el = document.getElementById(`sample-${id}`);
+  el.textContent = "Sample answer: " + sub.sample;
+  el.style.display = "block";
+}
+
+function updateProgress(){
+  const pct = totalGraded === 0 ? 0 : Math.round((correctCount/totalGraded)*100);
+  document.getElementById("progress-bar").style.width = pct + "%";
+  document.getElementById("progress-label").textContent =
+    `${correctCount} of ${totalGraded} auto-graded questions answered correctly (${pct}%)`;
+
+  if(correctCount === totalGraded){
+    const fs = document.getElementById("final-score");
+    fs.style.display = "block";
+    fs.innerHTML = `🎉 Great job! You've answered all ${totalGraded} auto-graded questions correctly.
+      Don't forget to write out the interpretation sentences in Part B and E before moving on.`;
+  }
+}
+
+render();
+</script>
+
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$']], displayMath: [['$$','$$']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</body>
+</html>
